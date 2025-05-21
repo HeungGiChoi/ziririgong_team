@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
 import Topbar from "./components/Topbar/Topbar";
-import MapDisplay from "./components/MapDisplay";
+import MapDisplay from "./components/MapDisplay/MapDisplay";
 import RankingSection from "./components/Ranking_section/RankingSection";
 
 /* ───── 지역·타입·연도 값은 GeoJSON 값과 ‘완전히 동일’하게 작성 ───── */
-const REGION_OPTS = ["전체", "서울", "경기", "인천"];
+const REGION_OPTS = ["전체", "서울특별시", "경기도", "인천광역시"];
 const YEAR_OPTS = ["전체", "2021", "2026", "2030"];
 const SORT_OPTS = [
-  { value: "pub_parking_cnt_desc", label: "공영주차장 많은 순" },
-  { value: "pub_parking_ev_asc", label: "공영주차장에 있는 충전기 수 적은 순" },
-  { value: "pub_parking_section_desc", label: "공영주차장 구획 수 많은 순" },
-  { value: "pri_parking_ev_asc", label: "민영주차장에 있는 충전기 수 적은 순" },
+  { value: "parking_public_count", label: "공영주차장 많은 순" },
+  {
+    value: "charger_public_count",
+    label: "공영주차장에 있는 충전기 수 적은 순",
+  },
+  { value: "parking_lot_count", label: "주차장 구획 수 많은 순" },
+  {
+    value: "charger_private_count",
+    label: "민영주차장에 있는 충전기 수 적은 순",
+  },
 ];
 
 export default function App() {
@@ -29,14 +35,20 @@ export default function App() {
 
   /* GeoJSON 1회만 로드 */
   useEffect(() => {
-    fetch("/metro_roi_region.geojson")
+    const geojsonUrls = {
+      2021: "https://heunggibucket.s3.ap-northeast-2.amazonaws.com/21%EB%85%84%EB%8F%84_final_DB.geojson", // 실제 URL로 교체 필요
+      2026: "https://heunggibucket.s3.ap-northeast-2.amazonaws.com/26%EB%85%84%EB%8F%84_final_DB.geojson",
+      2030: "https://heunggibucket.s3.ap-northeast-2.amazonaws.com/30%EB%85%84%EB%8F%84_final_DB.geojson",
+      전체: "https://heunggibucket.s3.ap-northeast-2.amazonaws.com/21%EB%85%84%EB%8F%84_final_DB.geojson", // 기본값으로 2021년도 사용 (또는 원하는 연도 선택)
+    };
+
+    const url = geojsonUrls[ui.year];
+
+    fetch(url)
       .then((res) => res.json())
-      .then((data) => {
-        console.log("geojson 데이터", data);
-        setGeo(data);
-      })
+      .then(setGeo)
       .catch((err) => console.error("GeoJSON load error:", err));
-  }, []);
+  }, [ui.year]);
 
   if (!geo) return <p>로딩 중...</p>;
 
@@ -47,9 +59,9 @@ export default function App() {
         const region = ui.region;
         const p = f.properties;
         return (
-          (region === "전체" || p.region === region) &&
-          p.traffic >= ui.minTraffic &&
-          p.station_cnt <= ui.minStation
+          (region === "전체" || p.region_group === region) &&
+          p.move_count >= ui.minTraffic &&
+          p.charger_station_count <= ui.minStation
         );
       })
     : [];
@@ -58,24 +70,29 @@ export default function App() {
   /* 정렬 */
   const sorted = [...filtered].sort((a, b) => {
     const p = ui.sortBy;
-    if (p === "pub_parking_cnt_desc")
-      return b.properties.pub_parking_cnt - a.properties.pub_parking_cnt;
-    if (p === "pub_parking_ev_asc")
-      return a.properties.pub_parking_ev_cnt - b.properties.pub_parking_ev_cnt;
-    if (p === "pub_parking_section_desc")
+    if (p === "parking_public_count")
       return (
-        b.properties.pub_parking_section_cnt -
-        a.properties.pub_parking_section_cnt
+        b.properties.parking_public_count - a.properties.parking_public_count
       );
-    if (p === "pri_parking_ev_asc")
-      return a.properties.pri_parking_ev_cnt - b.properties.pri_parking_ev_cnt;
+    if (p === "charger_public_count")
+      return (
+        a.properties.charger_public_count - b.properties.charger_public_count
+      );
+    if (p === "parking_lot_count")
+      return b.properties.parking_lot_count - a.properties.parking_lot_count;
+    if (p === "charger_private_count")
+      return (
+        a.properties.charger_private_count - b.properties.charger_private_count
+      );
     // 혹시나 예외(기본값) 처리
     return 0;
   });
 
-  const maxTraffic = Math.max(...geo.features.map((f) => f.properties.traffic));
+  const maxTraffic = Math.max(
+    ...geo.features.map((f) => f.properties.move_count)
+  );
   const maxStation = Math.max(
-    ...geo.features.map((f) => f.properties.station_cnt)
+    ...geo.features.map((f) => f.properties.charger_station_count)
   );
 
   return (
@@ -109,30 +126,3 @@ export default function App() {
     </div>
   );
 }
-// function App() {
-//   return (
-//     <div className="min-h-screen bg-gray-50 font-sans">
-//       {/* 상단 TopBar: (좌측정렬, 여백 plenty) */}
-//       <div
-//         className="w-full flex justify-start px-14 py-8 bg-white shadow"
-//         style={{ fontFamily: "Pretendard, sans-serif" }}
-//       >
-//         <Topbar />
-//       </div>
-//       {/* 본문: 지도+순위 */}
-//       <div className="flex flex-row justify-start items-start gap-8 px-14 pt-10">
-//         {/* 지도 */}
-//         <div
-//           className="rounded-2xl shadow-lg overflow-hidden bg-white"
-//           style={{ width: "800px", height: "550px" }}
-//         >
-//           <MapDisplay />
-//         </div>
-//         {/* 우측 순위 */}
-//         <div className="w-72 p-6 bg-white rounded-2xl shadow flex flex-col items-start border border-gray-200">
-//           <RankingSection />
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
