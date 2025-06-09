@@ -1,6 +1,5 @@
 import SortOption from "./SortOption";
 import RankingList from "./RankingList";
-import * as turf from "@turf/turf";
 
 export default function RankingSection({
   features,

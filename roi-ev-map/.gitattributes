@@ -1,0 +1,2 @@
+## EOL을 LF로 처리하라 지시
+*.ipynb text eol=lf

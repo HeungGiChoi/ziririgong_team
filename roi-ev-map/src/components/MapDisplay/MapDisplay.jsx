@@ -64,7 +64,7 @@ export default function MapDisplay({ features, selectedCenter }) {
   const mapboxZoom = hasSelected ? 11 : 7;
 
   return (
-    <div className="rounded-xl overflow-hidden w-[700px] h-[600px]">
+    <div className="rounded-xl overflow-hidden w-[400px] h-[600px]">
       <Plot
         data={data}
         layout={{
