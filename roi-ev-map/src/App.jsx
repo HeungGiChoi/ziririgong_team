@@ -1,4 +1,8 @@
-import { useState, useEffect } from "react";
+// 전체 앱을 관장하는 컴포넌트
+// Props라는 React 컴포넌트 간에 데이터를 전달하는 객체를 활용해
+// 각 자식 컴포넌트들에게 값을 전달
+// Props는 부모 -> 자식 방향으로 단방향 전달방식이다.
+import { useState, useEffect } from "react"; // useState, useEffect는 상태관리, 부수 기능을 수행해주는 특수한 함수인 'Hooks' 이다.
 import Topbar from "./components/Topbar/Topbar";
 import MapDisplay from "./components/MapDisplay/MapDisplay";
 import RankingSection from "./components/Ranking_section/RankingSection";
@@ -19,6 +23,8 @@ const SORT_OPTS = [
   },
 ];
 
+// export를 통해 명시적으로 함수를 외부로 내보내어 다른 Javascript 파일에 접근.
+// "function ...(){}" 형태로 Javascript에서는 함수를 파일 내부에서 정의함.
 export default function App() {
   const [geo, setGeo] = useState(null);
 
@@ -31,6 +37,7 @@ export default function App() {
     sortBy: "pub_parking_cnt_desc",
   });
 
+  // 정렬된 행정동을 클릭하면 지도에서 클릭한 행정동의 중심으로 이동하게 하는 변수.
   const [selectedCenter, setSelectedCenter] = useState(null);
 
   /* GeoJSON 1회만 로드 */
@@ -88,6 +95,7 @@ export default function App() {
     return 0;
   });
 
+  // 슬라이더(이동량, 충전소 수) 최대값 계산
   const maxTraffic = Math.max(
     ...geo.features.map((f) => f.properties.move_count)
   );
@@ -96,8 +104,10 @@ export default function App() {
   );
 
   return (
+    // jsx만의 특징, HTML 형식을 표현
     <div className="min-h-screen bg-gray-50 flex-col">
       <div className="ml-16 mt-10">
+        {/* Topbar 컴포넌트에 전달되는 props */}
         <Topbar
           ui={ui}
           setUI={setUI}
@@ -110,10 +120,12 @@ export default function App() {
       <div className="flex gap-8">
         {/* 지도는 필터링만 반영 */}
         <div className="rounded-xl w-[900px] h-[400px] ml-32 mb-8">
+          {/* MapDisplay 컴포넌트에 전달되는 props */}
           <MapDisplay features={filtered} selectedCenter={selectedCenter} />
         </div>
         {/* 순위는 필터 + 정렬 반영 */}
         <div className="mr-12 mt-4">
+          {/* RankingSection 컴포넌트에 전달되는 props */}
           <RankingSection
             features={sorted}
             sortBy={ui.sortBy}

@@ -1,4 +1,5 @@
-// src/components/MapDisplay.jsx
+// App.jsx와 RankingSection.jsx에서 Props로 값을 받아 UI의 지도에 표시하는 컴포넌트
+// 지도는 Mapbox에서 token을 발급받아 Mapbox 지도 서비스를 사용
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import Plot from "react-plotly.js";
@@ -6,6 +7,8 @@ import Plot from "react-plotly.js";
 window.mapboxgl = mapboxgl;
 window.mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
+// features는 필터링을 통해 특정 조건에 필터링 된 행정동 객체들
+// selectedCenter는 초기 설정과 RankingSection을 통해 선택된 행정동의 위도/경도 값
 export default function MapDisplay({ features, selectedCenter }) {
   console.log("지도 features", features);
   if (!features.length) return <p className="text-center">로딩 중...</p>;
@@ -56,6 +59,9 @@ export default function MapDisplay({ features, selectedCenter }) {
     },
   ];
 
+  // RankingSection에서 변경된 값을 App.jsx로 보내면
+  // App.jsx에서 변경된 setSelectedCenter를 selectedCenter로 업데이트
+  // App.jsx에서 Mapdisplay.jsx로 업데이트된 selectedCenter 값을 보냄
   const defaultCenter = { lon: 127.5, lat: 36.5 }; // 대한민국 중심
   const hasSelected = !!selectedCenter;
   const mapboxCenter = hasSelected
@@ -73,7 +79,7 @@ export default function MapDisplay({ features, selectedCenter }) {
             zoom: mapboxZoom,
             center: mapboxCenter,
             fitbounds: hasSelected ? undefined : "locations", // 📌 폴리곤 범위로 자동 줌
-            accesstoken: import.meta.env.VITE_MAPBOX_TOKEN, // 하드코딩 해제 완료
+            accesstoken: import.meta.env.VITE_MAPBOX_TOKEN,
           },
           margin: { t: 0, b: 0, l: 0, r: 0 },
         }}
